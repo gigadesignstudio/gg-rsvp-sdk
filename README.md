@@ -1,11 +1,11 @@
-# rsvp-sdk
+# gg-rsvp-sdk
 
 JavaScript/TypeScript SDK to integrate RSVP forms into external websites.
 
 ## Installation
 
 ```bash
-npm install @tuo-brand/events-sdk
+npm install gg-rsvp-sdk
 ```
 
 ## Usage
@@ -13,7 +13,7 @@ npm install @tuo-brand/events-sdk
 ### Initialization
 
 ```ts
-import { createEventsSDK } from "@tuo-brand/events-sdk";
+import { createEventsSDK } from "gg-rsvp-sdk";
 
 const sdk = createEventsSDK({
   companyId: "your-company-id",
@@ -85,12 +85,12 @@ await sdk.submitRSVP("slot-id", {
 Import base styles (optional):
 
 ```html
-<link rel="stylesheet" href="node_modules/@tuo-brand/events-sdk/dist/styles.css" />
+<link rel="stylesheet" href="node_modules/gg-rsvp-sdk/dist/styles.css" />
 ```
 
 Or via import (bundler):
 ```js
-import "@tuo-brand/events-sdk/dist/styles.css";
+import "gg-rsvp-sdk/dist/styles.css";
 ```
 
 You can also customize using the `.rsvp-sdk-*` classes (Tailwind, custom CSS).

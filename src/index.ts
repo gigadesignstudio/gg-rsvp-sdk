@@ -1,5 +1,5 @@
 /**
- * @tuo-brand/events-sdk
+ * gg-rsvp-sdk
  * SDK to integrate RSVP forms into external websites.
  * Based on app/pages/playground.vue logic
  */
