@@ -103,3 +103,12 @@ npm run build
 ```
 
 Output: `dist/` with ESM, CJS and TypeScript types.
+
+## Test
+
+Requires Node 20+ (see `engines` in package.json).
+
+```bash
+npm run test        # run once
+npm run test:watch  # watch mode
+```

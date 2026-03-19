@@ -54,6 +54,18 @@ function getDefaultHeaders(companyId: string): Record<string, string> {
   };
 }
 
+function wrapFetchError(err: unknown, url: string): Error {
+  if (err instanceof Error) {
+    if (err.message === "Failed to fetch") {
+      return new Error(
+        `Failed to fetch ${url}. Check baseUrl, CORS policy, and network connection.`
+      );
+    }
+    return err;
+  }
+  return new Error(String(err));
+}
+
 export class EventsSDK {
   private companyId: string;
   private baseUrl: string;
@@ -88,17 +100,21 @@ export class EventsSDK {
    */
   async getEventConfig(eventId: string): Promise<EventFormConfig> {
     const url = `${this.baseUrl}/api/events/${eventId}/form`;
-    const res = await fetch(url, {
-      method: "GET",
-      headers: getDefaultHeaders(this.companyId),
-    });
+    try {
+      const res = await fetch(url, {
+        method: "GET",
+        headers: getDefaultHeaders(this.companyId),
+      });
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err?.statusMessage ?? err?.message ?? `HTTP ${res.status}`);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.statusMessage ?? err?.message ?? `HTTP ${res.status}`);
+      }
+
+      return await res.json();
+    } catch (err) {
+      throw wrapFetchError(err, url);
     }
-
-    return res.json();
   }
 
   /**
@@ -269,19 +285,23 @@ export class EventsSDK {
     data: RsvpSubmissionData
   ): Promise<{ submissionId: string }> {
     const url = `${this.baseUrl}/api/event_slots/${slotId}/submissions`;
-    const res = await fetch(url, {
-      method: "POST",
-      headers: getDefaultHeaders(this.companyId),
-      body: JSON.stringify(data),
-    });
+    try {
+      const res = await fetch(url, {
+        method: "POST",
+        headers: getDefaultHeaders(this.companyId),
+        body: JSON.stringify(data),
+      });
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err?.statusMessage ?? err?.message ?? `HTTP ${res.status}`);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.statusMessage ?? err?.message ?? `HTTP ${res.status}`);
+      }
+
+      const result = await res.json();
+      return { submissionId: result.resourceId ?? result.id ?? "" };
+    } catch (err) {
+      throw wrapFetchError(err, url);
     }
-
-    const result = await res.json();
-    return { submissionId: result.resourceId ?? result.id ?? "" };
   }
 }
 

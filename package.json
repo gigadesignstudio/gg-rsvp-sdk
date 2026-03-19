@@ -1,6 +1,6 @@
 {
   "name": "gg-rsvp-sdk",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "JavaScript/TypeScript SDK to integrate RSVP forms into external websites",
   "repository": {
     "type": "git",
@@ -22,7 +22,9 @@
   ],
   "scripts": {
     "build": "tsup && cp src/styles.css dist/styles.css",
-    "dev": "tsup --watch"
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "keywords": [
     "rsvp",
@@ -33,7 +35,9 @@
   "license": "MIT",
   "devDependencies": {
     "tsup": "^7.2.0",
-    "typescript": "^5.3.0"
+    "typescript": "^5.3.0",
+    "vitest": "^2.1.0",
+    "happy-dom": "^15.11.0"
   },
   "engines": {
     "node": ">=20"
