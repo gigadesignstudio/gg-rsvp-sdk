@@ -1,0 +1,105 @@
+# rsvp-sdk
+
+JavaScript/TypeScript SDK to integrate RSVP forms into external websites.
+
+## Installation
+
+```bash
+npm install @tuo-brand/events-sdk
+```
+
+## Usage
+
+### Initialization
+
+```ts
+import { createEventsSDK } from "@tuo-brand/events-sdk";
+
+const sdk = createEventsSDK({
+  companyId: "your-company-id",
+  baseUrl: "https://your-rsvp-backend.com", // optional, default: "/"
+});
+```
+
+### Fetch event configuration
+
+```ts
+const config = await sdk.getEventConfig("event-id");
+console.log(config.title, config.field_configuration, config.event_slots);
+```
+
+### Get form definition (JSON) for custom rendering
+
+Returns a structured JSON with fields, slots and title so you can build the form however you want (React, Vue, custom HTML, etc.):
+
+```ts
+const def = await sdk.getFormDefinition("event-id");
+// def = { eventId, title, fields, slots, singleSlot }
+// def.fields = [{ id, label, slug, type, required, placeholder, options?, ... }]
+// def.slots = [{ id, title, capacity, starts_at, ends_at }]
+// def.singleSlot = true when there's only one slot (no slot selector needed)
+```
+
+### Render form in the DOM
+
+```html
+<div id="rsvp-container"></div>
+```
+
+```ts
+await sdk.renderForm("rsvp-container", "event-id", {
+  onSuccess: () => alert("RSVP submitted!"),
+  onError: (err) => console.error(err),
+  onSubmit: () => console.log("Submitting..."),
+});
+```
+
+### Submit RSVP programmatically
+
+```ts
+await sdk.submitRSVP("slot-id", {
+  email: "user@example.com",
+  first_name: "John",
+  last_name: "Doe",
+  // ... other fields from field_configuration
+});
+```
+
+## API
+
+| Method | Description |
+|--------|-------------|
+| `getEventConfig(eventId)` | Fetches raw form configuration from the API |
+| `getFormDefinition(eventId)` | Returns JSON form definition (fields, slots, title) for custom rendering |
+| `renderForm(containerId, eventId, callbacks?)` | Injects the form into the DOM |
+| `submitRSVP(slotId, data)` | Submits data to the API |
+
+## Security
+
+- All requests include the `x-company-id` header
+- Domain whitelist is enforced on the backend
+- The SDK only passes the required parameters
+
+## Styles
+
+Import base styles (optional):
+
+```html
+<link rel="stylesheet" href="node_modules/@tuo-brand/events-sdk/dist/styles.css" />
+```
+
+Or via import (bundler):
+```js
+import "@tuo-brand/events-sdk/dist/styles.css";
+```
+
+You can also customize using the `.rsvp-sdk-*` classes (Tailwind, custom CSS).
+
+## Build
+
+```bash
+npm install
+npm run build
+```
+
+Output: `dist/` with ESM, CJS and TypeScript types.

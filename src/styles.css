@@ -1,0 +1,90 @@
+/* Base styles for RSVP SDK form - optional, customizable with Tailwind or custom CSS */
+
+.rsvp-sdk-form {
+  max-width: 28rem;
+  padding: 1.25rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  background: #fff;
+}
+
+.rsvp-sdk-title {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin-bottom: 1.25rem;
+}
+
+.rsvp-sdk-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.rsvp-sdk-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.rsvp-sdk-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.rsvp-sdk-required {
+  color: #ef4444;
+}
+
+.rsvp-sdk-input,
+.rsvp-sdk-textarea,
+.rsvp-sdk-select {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+}
+
+.rsvp-sdk-input:focus,
+.rsvp-sdk-textarea:focus,
+.rsvp-sdk-select:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.rsvp-sdk-textarea {
+  min-height: 4rem;
+  resize: vertical;
+}
+
+.rsvp-sdk-field-checkbox .rsvp-sdk-checkbox-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.rsvp-sdk-single-slot {
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.rsvp-sdk-submit {
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  background: #3b82f6;
+  color: #fff;
+  border: none;
+  border-radius: 0.375rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.rsvp-sdk-submit:hover {
+  background: #2563eb;
+}
+
+.rsvp-sdk-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
