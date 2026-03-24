@@ -1,6 +1,6 @@
 {
   "name": "gg-rsvp-sdk",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "JavaScript/TypeScript SDK to integrate RSVP forms into external websites",
   "repository": {
     "type": "git",

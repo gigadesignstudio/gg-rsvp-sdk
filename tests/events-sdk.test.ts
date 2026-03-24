@@ -123,6 +123,7 @@ describe("EventsSDK", () => {
         ]),
         slots: mockEventConfig.event_slots,
         singleSlot: true,
+        multiSlotSelection: false,
       });
       expect(def.fields).toHaveLength(2);
       expect(def.singleSlot).toBe(true);
@@ -160,7 +161,50 @@ describe("EventsSDK", () => {
 
       const def = await sdk.getFormDefinition("evt-1");
       expect(def.singleSlot).toBe(false);
+      expect(def.multiSlotSelection).toBe(false);
       expect(def.slots).toHaveLength(2);
+    });
+
+    it("sets multiSlotSelection when slots field has allows_multiple_slot_subscriptions", async () => {
+      const multiSelectConfig: EventFormConfig = {
+        ...mockEventConfig,
+        field_configuration: [
+          ...(mockEventConfig.field_configuration as FormField[]),
+          {
+            id: "f3",
+            label: "Slots",
+            slug: "slots",
+            type: "slots",
+            required: true,
+            sort: 2,
+            allows_multiple_slot_subscriptions: true,
+          },
+        ],
+        event_slots: [
+          ...mockEventConfig.event_slots,
+          {
+            id: "slot-2",
+            title: "Slot B",
+            capacity: 5,
+            starts_at: "2025-04-02T10:00:00Z",
+            ends_at: "2025-04-02T12:00:00Z",
+          },
+        ],
+      };
+
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(() =>
+          Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve(multiSelectConfig),
+            status: 200,
+          })
+        )
+      );
+
+      const def = await sdk.getFormDefinition("evt-1");
+      expect(def.multiSlotSelection).toBe(true);
     });
   });
 
@@ -221,6 +265,46 @@ describe("EventsSDK", () => {
     });
   });
 
+  describe("submitRSVPForSlots", () => {
+    it("posts once per slot with the same body", async () => {
+      const fetchMock = vi.fn((url: string) => {
+        if (url.includes("/submissions")) {
+          const id = url.includes("slot-1") ? "sub-a" : "sub-b";
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({ resourceId: id }),
+            status: 200,
+          });
+        }
+        return Promise.resolve({
+          ok: true,
+          json: () => Promise.resolve(mockEventConfig),
+          status: 200,
+        });
+      });
+      vi.stubGlobal("fetch", fetchMock);
+
+      const result = await sdk.submitRSVPForSlots(
+        ["slot-1", "slot-2"],
+        { email: "u@example.com" }
+      );
+
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${baseUrl}/api/event_slots/slot-1/submissions`,
+        expect.objectContaining({
+          body: JSON.stringify({ email: "u@example.com" }),
+        })
+      );
+      expect(fetchMock).toHaveBeenCalledWith(
+        `${baseUrl}/api/event_slots/slot-2/submissions`,
+        expect.objectContaining({
+          body: JSON.stringify({ email: "u@example.com" }),
+        })
+      );
+      expect(result.submissionIds).toEqual(["sub-a", "sub-b"]);
+    });
+  });
+
   describe("renderForm", () => {
     it("injects form into container", async () => {
       document.body.innerHTML = '<div id="rsvp-container"></div>';
@@ -241,6 +325,53 @@ describe("EventsSDK", () => {
       await expect(sdk.renderForm("missing-container", "evt-1")).rejects.toThrow(
         "Container #missing-container not found"
       );
+    });
+
+    it("renders slot checkboxes when allows_multiple_slot_subscriptions is true", async () => {
+      const multiSelectConfig: EventFormConfig = {
+        ...mockEventConfig,
+        field_configuration: [
+          ...(mockEventConfig.field_configuration as FormField[]),
+          {
+            id: "f3",
+            label: "Pick slots",
+            slug: "slots",
+            type: "slots",
+            required: true,
+            sort: 2,
+            allows_multiple_slot_subscriptions: true,
+          },
+        ],
+        event_slots: [
+          ...mockEventConfig.event_slots,
+          {
+            id: "slot-2",
+            title: "Slot B",
+            capacity: 5,
+            starts_at: "2025-04-02T10:00:00Z",
+            ends_at: "2025-04-02T12:00:00Z",
+          },
+        ],
+      };
+
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(() =>
+          Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve(multiSelectConfig),
+            status: 200,
+          })
+        )
+      );
+
+      document.body.innerHTML = '<div id="rsvp-container"></div>';
+      await sdk.renderForm("rsvp-container", "evt-1");
+
+      const container = document.getElementById("rsvp-container");
+      const checks = container?.querySelectorAll('input[type="checkbox"][name="slotId"]');
+      expect(checks?.length).toBe(2);
+      expect(container?.innerHTML).toContain("rsvp-sdk-field-slots-multi");
     });
   });
 });

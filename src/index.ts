@@ -85,6 +85,9 @@ export class EventsSDK {
     const slots = config.event_slots ?? [];
     const hasSlotField = fields.some((f) => f.type === "slots");
     const singleSlot = slots.length === 1 && !hasSlotField;
+    const multiSlotSelection = fields.some(
+      (f) => f.type === "slots" && f.allows_multiple_slot_subscriptions === true
+    );
 
     return {
       eventId: config.id,
@@ -92,6 +95,7 @@ export class EventsSDK {
       fields,
       slots,
       singleSlot,
+      multiSlotSelection,
     };
   }
 
@@ -133,7 +137,7 @@ export class EventsSDK {
     }
   ): Promise<void> {
     const def = await this.getFormDefinition(eventId);
-    const { fields, slots, singleSlot } = def;
+    const { fields, slots, singleSlot, multiSlotSelection } = def;
     const container = document.getElementById(containerId);
     if (!container) {
       throw new Error(`Container #${containerId} not found`);
@@ -152,10 +156,28 @@ export class EventsSDK {
       const label = `<label class="rsvp-sdk-label">${escapeHtml(field.label)} ${requiredMark}</label>`;
 
       if (field.type === "slots") {
-        html += `
+        if (field.allows_multiple_slot_subscriptions) {
+          html += `
+          <div class="rsvp-sdk-field rsvp-sdk-field-slots-multi" data-slug="${escapeHtml(field.slug)}">
+            ${label}
+            <div class="rsvp-sdk-slot-checkboxes">
+              ${slots
+                .map(
+                  (s) =>
+                    `<label class="rsvp-sdk-checkbox-wrap">
+                <input type="checkbox" name="slotId" value="${escapeHtml(s.id)}" class="rsvp-sdk-checkbox rsvp-sdk-slot-checkbox" />
+                <span>${escapeHtml(s.title || formatSlotDate(s.starts_at))}</span>
+              </label>`
+                )
+                .join("")}
+            </div>
+          </div>
+        `;
+        } else {
+          html += `
           <div class="rsvp-sdk-field" data-slug="${escapeHtml(field.slug)}">
             ${label}
-            <select class="rsvp-sdk-select" name="slotId" required>
+            <select class="rsvp-sdk-select" name="slotId" ${field.required ? "required" : ""}>
               <option value="">Select slot</option>
               ${slots
                 .map(
@@ -168,6 +190,7 @@ export class EventsSDK {
             </select>
           </div>
         `;
+        }
       } else if (field.type === "checkbox") {
         html += `
           <div class="rsvp-sdk-field rsvp-sdk-field-checkbox" data-slug="${escapeHtml(field.slug)}">
@@ -238,12 +261,22 @@ export class EventsSDK {
       callbacks?.onSubmit?.();
 
       const formData = new FormData(form);
-      const slotId = singleSlot
-        ? slots[0]!.id
-        : (formData.get("slotId") as string);
-      if (!slotId) {
-        callbacks?.onError?.(new Error("Please select a slot"));
-        return;
+      let slotIds: string[];
+      if (singleSlot) {
+        slotIds = [slots[0]!.id];
+      } else if (multiSlotSelection) {
+        slotIds = formData.getAll("slotId").filter((v) => v && String(v).trim() !== "") as string[];
+        if (slotIds.length === 0) {
+          callbacks?.onError?.(new Error("Please select at least one slot"));
+          return;
+        }
+      } else {
+        const slotId = formData.get("slotId") as string;
+        if (!slotId) {
+          callbacks?.onError?.(new Error("Please select a slot"));
+          return;
+        }
+        slotIds = [slotId];
       }
 
       const emailField = fields.find((f) => f.type === "email");
@@ -267,12 +300,31 @@ export class EventsSDK {
       }
 
       try {
-        await this.submitRSVP(slotId, body);
+        await this.submitRSVPForSlots(slotIds, body);
         callbacks?.onSuccess?.();
       } catch (err) {
         callbacks?.onError?.(err instanceof Error ? err : new Error(String(err)));
       }
     });
+  }
+
+  /**
+   * Submits the same RSVP payload for each slot (multi-slot events).
+   * Stops on the first failed request.
+   */
+  async submitRSVPForSlots(
+    slotIds: string[],
+    data: RsvpSubmissionData
+  ): Promise<{ submissionIds: string[] }> {
+    if (slotIds.length === 0) {
+      throw new Error("At least one slot is required");
+    }
+    const submissionIds: string[] = [];
+    for (const id of slotIds) {
+      const { submissionId } = await this.submitRSVP(id, data);
+      submissionIds.push(submissionId);
+    }
+    return { submissionIds };
   }
 
   /**

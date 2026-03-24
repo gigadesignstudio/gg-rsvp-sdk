@@ -34,10 +34,11 @@ Returns a structured JSON with fields, slots and title so you can build the form
 
 ```ts
 const def = await sdk.getFormDefinition("event-id");
-// def = { eventId, title, fields, slots, singleSlot }
-// def.fields = [{ id, label, slug, type, required, placeholder, options?, ... }]
+// def = { eventId, title, fields, slots, singleSlot, multiSlotSelection }
+// def.fields = [{ id, label, slug, type, required, placeholder, options?, allows_multiple_slot_subscriptions?, ... }]
 // def.slots = [{ id, title, capacity, starts_at, ends_at }]
 // def.singleSlot = true when there's only one slot (no slot selector needed)
+// def.multiSlotSelection = true when a `slots` field has `allows_multiple_slot_subscriptions: true` (checkboxes, one POST per slot)
 ```
 
 ### Render form in the DOM
@@ -63,6 +64,11 @@ await sdk.submitRSVP("slot-id", {
   last_name: "Doe",
   // ... other fields from field_configuration
 });
+
+// Multi-slot: same payload, one POST per slot id
+await sdk.submitRSVPForSlots(["slot-a", "slot-b"], {
+  email: "user@example.com",
+});
 ```
 
 ## API
@@ -73,6 +79,7 @@ await sdk.submitRSVP("slot-id", {
 | `getFormDefinition(eventId)` | Returns JSON form definition (fields, slots, title) for custom rendering |
 | `renderForm(containerId, eventId, callbacks?)` | Injects the form into the DOM |
 | `submitRSVP(slotId, data)` | Submits data to the API |
+| `submitRSVPForSlots(slotIds, data)` | Submits the same data for each slot (sequential POSTs) |
 
 ## Security
 

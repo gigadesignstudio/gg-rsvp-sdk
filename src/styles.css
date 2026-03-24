@@ -64,6 +64,12 @@
   cursor: pointer;
 }
 
+.rsvp-sdk-slot-checkboxes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
 .rsvp-sdk-single-slot {
   font-size: 0.75rem;
   color: #9ca3af;

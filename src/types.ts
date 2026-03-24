@@ -26,6 +26,8 @@ export interface FormField {
   sort?: number;
   placeholder?: string;
   options?: FormFieldOption[];
+  /** When `type` is `slots`, allow selecting multiple slots (one submission POST per slot). */
+  allows_multiple_slot_subscriptions?: boolean;
 }
 
 export interface EventSlot {
@@ -59,4 +61,6 @@ export interface FormDefinition {
   fields: FormField[];
   slots: EventSlot[];
   singleSlot: boolean;
+  /** True when a `slots` field has `allows_multiple_slot_subscriptions: true`. */
+  multiSlotSelection: boolean;
 }
