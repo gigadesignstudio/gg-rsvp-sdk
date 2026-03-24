@@ -81,7 +81,7 @@ await sdk.submitRSVPForSlots(["slot-a", "slot-b"], {
 | `getFormDefinition(eventId)` | Returns JSON form definition (fields, slots, title) for custom rendering |
 | `renderForm(containerId, eventId, callbacks?)` | Injects the form into the DOM |
 | `submitRSVP(slotId, data)` | Submits data to the API |
-| `submitRSVPForSlots(slotIds, data)` | Submits the same data for each slot (sequential POSTs) |
+| `submitRSVPForSlots(slotIds, data)` | Submits the same data for each slot in parallel (`Promise.all`) |
 
 ## Security
 

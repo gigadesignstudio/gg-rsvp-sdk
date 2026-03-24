@@ -333,8 +333,8 @@ export class EventsSDK {
   }
 
   /**
-   * Submits the same RSVP payload for each slot (multi-slot events).
-   * Stops on the first failed request.
+   * Submits the same RSVP payload for each slot in parallel (multi-slot events).
+   * One POST per slot; uses Promise.all — if any request fails, the whole call rejects.
    */
   async submitRSVPForSlots(
     slotIds: string[],
@@ -343,12 +343,8 @@ export class EventsSDK {
     if (slotIds.length === 0) {
       throw new Error("At least one slot is required");
     }
-    const submissionIds: string[] = [];
-    for (const id of slotIds) {
-      const { submissionId } = await this.submitRSVP(id, data);
-      submissionIds.push(submissionId);
-    }
-    return { submissionIds };
+    const results = await Promise.all(slotIds.map((id) => this.submitRSVP(id, data)));
+    return { submissionIds: results.map((r) => r.submissionId) };
   }
 
   /**
