@@ -27,13 +27,9 @@ export interface EventsSDKOptions {
 
 const DEFAULT_BASE_URL = "/";
 
-function parseFieldConfig(
-  config: EventFormConfig["field_configuration"]
-): FormField[] {
+function parseFieldConfig(config: EventFormConfig["field_configuration"]): FormField[] {
   if (!config || typeof config !== "object") return [];
-  const list: FormField[] = Array.isArray(config)
-    ? config
-    : (Object.values(config) as FormField[]);
+  const list: FormField[] = Array.isArray(config) ? config : (Object.values(config) as FormField[]);
   return list.sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0));
 }
 
@@ -85,9 +81,7 @@ export class EventsSDK {
     const slots = config.event_slots ?? [];
     const hasSlotField = fields.some((f) => f.type === "slots");
     const singleSlot = slots.length === 1 && !hasSlotField;
-    const multiSlotSelection = fields.some(
-      (f) => f.type === "slots" && f.allows_multiple_slot_subscriptions === true
-    );
+    const multiSlotSelection = config.event_multi_slot === true;
 
     return {
       eventId: config.id,
@@ -96,6 +90,10 @@ export class EventsSDK {
       slots,
       singleSlot,
       multiSlotSelection,
+      eventLocation: config.event_location ?? null,
+      eventLogo: config.event_logo ?? null,
+      companyLogo: config.company_logo ?? null,
+      company: config.company ?? null,
     };
   }
 
@@ -137,7 +135,8 @@ export class EventsSDK {
     }
   ): Promise<void> {
     const def = await this.getFormDefinition(eventId);
-    const { fields, slots, singleSlot, multiSlotSelection } = def;
+    const { fields, slots, singleSlot, multiSlotSelection, eventLocation, eventLogo, companyLogo, company } =
+      def;
     const container = document.getElementById(containerId);
     if (!container) {
       throw new Error(`Container #${containerId} not found`);
@@ -145,27 +144,45 @@ export class EventsSDK {
 
     const formId = `rsvp-form-${eventId}-${Date.now()}`;
 
+    const headerExtras = [
+      companyLogo
+        ? `<img class="rsvp-sdk-company-logo" src="${escapeHtml(companyLogo)}" alt="" />`
+        : "",
+      company ? `<p class="rsvp-sdk-company">${escapeHtml(company)}</p>` : "",
+      eventLogo ? `<img class="rsvp-sdk-event-logo" src="${escapeHtml(eventLogo)}" alt="" />` : "",
+      eventLocation ? `<p class="rsvp-sdk-location">${escapeHtml(eventLocation)}</p>` : "",
+    ]
+      .filter(Boolean)
+      .join("");
+
     let html = `
       <form id="${formId}" class="rsvp-sdk-form" data-event-id="${eventId}">
+        ${headerExtras ? `<div class="rsvp-sdk-header">${headerExtras}</div>` : ""}
         <h2 class="rsvp-sdk-title">${escapeHtml(def.title)}</h2>
         <div class="rsvp-sdk-fields">
     `;
 
     for (const field of fields) {
       const requiredMark = field.required ? '<span class="rsvp-sdk-required">*</span>' : "";
-      const label = `<label class="rsvp-sdk-label">${escapeHtml(field.label)} ${requiredMark}</label>`;
+      const label = `<label class="rsvp-sdk-label">${escapeHtml(
+        field.label
+      )} ${requiredMark}</label>`;
 
       if (field.type === "slots") {
-        if (field.allows_multiple_slot_subscriptions) {
+        if (multiSlotSelection) {
           html += `
-          <div class="rsvp-sdk-field rsvp-sdk-field-slots-multi" data-slug="${escapeHtml(field.slug)}">
+          <div class="rsvp-sdk-field rsvp-sdk-field-slots-multi" data-slug="${escapeHtml(
+            field.slug
+          )}">
             ${label}
             <div class="rsvp-sdk-slot-checkboxes">
               ${slots
                 .map(
                   (s) =>
                     `<label class="rsvp-sdk-checkbox-wrap">
-                <input type="checkbox" name="slotId" value="${escapeHtml(s.id)}" class="rsvp-sdk-checkbox rsvp-sdk-slot-checkbox" />
+                <input type="checkbox" name="slotId" value="${escapeHtml(
+                  s.id
+                )}" class="rsvp-sdk-checkbox rsvp-sdk-slot-checkbox" />
                 <span>${escapeHtml(s.title || formatSlotDate(s.starts_at))}</span>
               </label>`
                 )
@@ -202,15 +219,14 @@ export class EventsSDK {
         `;
       } else if (field.type === "select") {
         const opts = (field.options ?? [])
-          .map(
-            (o) =>
-              `<option value="${escapeHtml(o.value)}">${escapeHtml(o.label)}</option>`
-          )
+          .map((o) => `<option value="${escapeHtml(o.value)}">${escapeHtml(o.label)}</option>`)
           .join("");
         html += `
           <div class="rsvp-sdk-field" data-slug="${escapeHtml(field.slug)}">
             ${label}
-            <select class="rsvp-sdk-select" name="${escapeHtml(field.slug)}" ${field.required ? "required" : ""}>
+            <select class="rsvp-sdk-select" name="${escapeHtml(field.slug)}" ${
+          field.required ? "required" : ""
+        }>
               <option value="">${escapeHtml(field.placeholder ?? "Select...")}</option>
               ${opts}
             </select>
@@ -220,7 +236,11 @@ export class EventsSDK {
         html += `
           <div class="rsvp-sdk-field" data-slug="${escapeHtml(field.slug)}">
             ${label}
-            <textarea class="rsvp-sdk-textarea" name="${escapeHtml(field.slug)}" placeholder="${escapeHtml(field.placeholder ?? "")}" ${field.required ? "required" : ""}></textarea>
+            <textarea class="rsvp-sdk-textarea" name="${escapeHtml(
+              field.slug
+            )}" placeholder="${escapeHtml(field.placeholder ?? "")}" ${
+          field.required ? "required" : ""
+        }></textarea>
           </div>
         `;
       } else {
@@ -230,7 +250,11 @@ export class EventsSDK {
         html += `
           <div class="rsvp-sdk-field" data-slug="${escapeHtml(field.slug)}">
             ${label}
-            <input type="${inputType}" class="rsvp-sdk-input" name="${escapeHtml(field.slug)}" placeholder="${escapeHtml(field.placeholder ?? "")}" ${field.required ? "required" : ""} />
+            <input type="${inputType}" class="rsvp-sdk-input" name="${escapeHtml(
+          field.slug
+        )}" placeholder="${escapeHtml(field.placeholder ?? "")}" ${
+          field.required ? "required" : ""
+        } />
           </div>
         `;
       }
@@ -332,10 +356,7 @@ export class EventsSDK {
    * @param slotId - Slot ID (from event config)
    * @param data - Form data (email required + custom fields)
    */
-  async submitRSVP(
-    slotId: string,
-    data: RsvpSubmissionData
-  ): Promise<{ submissionId: string }> {
+  async submitRSVP(slotId: string, data: RsvpSubmissionData): Promise<{ submissionId: string }> {
     const url = `${this.baseUrl}/api/event_slots/${slotId}/submissions`;
     try {
       const res = await fetch(url, {

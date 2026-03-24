@@ -124,6 +124,10 @@ describe("EventsSDK", () => {
         slots: mockEventConfig.event_slots,
         singleSlot: true,
         multiSlotSelection: false,
+        eventLocation: null,
+        eventLogo: null,
+        companyLogo: null,
+        company: null,
       });
       expect(def.fields).toHaveLength(2);
       expect(def.singleSlot).toBe(true);
@@ -165,9 +169,10 @@ describe("EventsSDK", () => {
       expect(def.slots).toHaveLength(2);
     });
 
-    it("sets multiSlotSelection when slots field has allows_multiple_slot_subscriptions", async () => {
+    it("sets multiSlotSelection when event_multi_slot is true", async () => {
       const multiSelectConfig: EventFormConfig = {
         ...mockEventConfig,
+        event_multi_slot: true,
         field_configuration: [
           ...(mockEventConfig.field_configuration as FormField[]),
           {
@@ -177,7 +182,6 @@ describe("EventsSDK", () => {
             type: "slots",
             required: true,
             sort: 2,
-            allows_multiple_slot_subscriptions: true,
           },
         ],
         event_slots: [
@@ -205,6 +209,33 @@ describe("EventsSDK", () => {
 
       const def = await sdk.getFormDefinition("evt-1");
       expect(def.multiSlotSelection).toBe(true);
+    });
+
+    it("maps event_location, logos and company from API", async () => {
+      const richConfig: EventFormConfig = {
+        ...mockEventConfig,
+        event_location: "Via Roma 1, Milano",
+        event_logo: "https://cdn.example.com/event.png",
+        company_logo: "https://cdn.example.com/co.png",
+        company: "Acme Srl",
+      };
+
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(() =>
+          Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve(richConfig),
+            status: 200,
+          })
+        )
+      );
+
+      const def = await sdk.getFormDefinition("evt-1");
+      expect(def.eventLocation).toBe("Via Roma 1, Milano");
+      expect(def.eventLogo).toBe("https://cdn.example.com/event.png");
+      expect(def.companyLogo).toBe("https://cdn.example.com/co.png");
+      expect(def.company).toBe("Acme Srl");
     });
   });
 
@@ -327,9 +358,10 @@ describe("EventsSDK", () => {
       );
     });
 
-    it("renders slot checkboxes when allows_multiple_slot_subscriptions is true", async () => {
+    it("renders slot checkboxes when event_multi_slot is true", async () => {
       const multiSelectConfig: EventFormConfig = {
         ...mockEventConfig,
+        event_multi_slot: true,
         field_configuration: [
           ...(mockEventConfig.field_configuration as FormField[]),
           {
@@ -339,7 +371,6 @@ describe("EventsSDK", () => {
             type: "slots",
             required: true,
             sort: 2,
-            allows_multiple_slot_subscriptions: true,
           },
         ],
         event_slots: [

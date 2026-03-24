@@ -26,8 +26,6 @@ export interface FormField {
   sort?: number;
   placeholder?: string;
   options?: FormFieldOption[];
-  /** When `type` is `slots`, allow selecting multiple slots (one submission POST per slot). */
-  allows_multiple_slot_subscriptions?: boolean;
 }
 
 export interface EventSlot {
@@ -43,6 +41,15 @@ export interface EventFormConfig {
   title: string;
   field_configuration: Record<string, FormField> | FormField[] | null;
   event_slots: EventSlot[];
+  /** From GET form: when true, users can select multiple slots (one submission per slot). */
+  event_multi_slot?: boolean;
+  event_location?: string | null;
+  /** URL of the event image/logo. */
+  event_logo?: string | null;
+  /** URL of the company logo. */
+  company_logo?: string | null;
+  /** Company name or identifier from the API. */
+  company?: string | null;
 }
 
 export interface RsvpSubmissionData {
@@ -61,6 +68,10 @@ export interface FormDefinition {
   fields: FormField[];
   slots: EventSlot[];
   singleSlot: boolean;
-  /** True when a `slots` field has `allows_multiple_slot_subscriptions: true`. */
+  /** Mirrors `event_multi_slot` from the form API response. */
   multiSlotSelection: boolean;
+  eventLocation: string | null;
+  eventLogo: string | null;
+  companyLogo: string | null;
+  company: string | null;
 }

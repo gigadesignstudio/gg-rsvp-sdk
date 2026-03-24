@@ -8,6 +8,35 @@
   background: #fff;
 }
 
+.rsvp-sdk-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.rsvp-sdk-company-logo,
+.rsvp-sdk-event-logo {
+  max-width: 100%;
+  height: auto;
+  max-height: 4rem;
+  object-fit: contain;
+}
+
+.rsvp-sdk-company {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #6b7280;
+  margin: 0;
+}
+
+.rsvp-sdk-location {
+  font-size: 0.8125rem;
+  color: #6b7280;
+  margin: 0;
+}
+
 .rsvp-sdk-title {
   font-size: 1.125rem;
   font-weight: 600;

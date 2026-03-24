@@ -25,6 +25,7 @@ const sdk = createEventsSDK({
 
 ```ts
 const config = await sdk.getEventConfig("event-id");
+// config also includes: event_multi_slot, event_location, event_logo, company_logo, company
 console.log(config.title, config.field_configuration, config.event_slots);
 ```
 
@@ -34,11 +35,12 @@ Returns a structured JSON with fields, slots and title so you can build the form
 
 ```ts
 const def = await sdk.getFormDefinition("event-id");
-// def = { eventId, title, fields, slots, singleSlot, multiSlotSelection }
-// def.fields = [{ id, label, slug, type, required, placeholder, options?, allows_multiple_slot_subscriptions?, ... }]
+// def = { eventId, title, fields, slots, singleSlot, multiSlotSelection, eventLocation, eventLogo, companyLogo, company }
+// def.fields = [{ id, label, slug, type, required, placeholder, options?, ... }]
 // def.slots = [{ id, title, capacity, starts_at, ends_at }]
 // def.singleSlot = true when there's only one slot (no slot selector needed)
-// def.multiSlotSelection = true when a `slots` field has `allows_multiple_slot_subscriptions: true` (checkboxes, one POST per slot)
+// def.multiSlotSelection mirrors API field `event_multi_slot` (checkboxes + one POST per slot when true)
+// eventLocation / eventLogo / companyLogo / company mirror API snake_case fields on the form response
 ```
 
 ### Render form in the DOM
