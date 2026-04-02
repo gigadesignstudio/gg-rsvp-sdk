@@ -21,6 +21,8 @@ const sdk = createEventsSDK({
 });
 ```
 
+Each internal `fetch` adds `x-origin` with the **current** client origin (`location.origin` in the browser, evaluated when the request runs). The browser still sets the real `Origin` header itself; use `x-origin` on the server if you need the embedding page explicitly. In non-browser environments without `location`, the header is omitted.
+
 ### Fetch event configuration
 
 ```ts
@@ -81,11 +83,12 @@ await sdk.submitRSVPForSlots(["slot-a", "slot-b"], {
 | `getFormDefinition(eventId)` | Returns JSON form definition (fields, slots, title) for custom rendering |
 | `renderForm(containerId, eventId, callbacks?)` | Injects the form into the DOM |
 | `submitRSVP(slotId, data)` | Submits data to the API |
-| `submitRSVPForSlots(slotIds, data)` | Submits the same data for each slot in parallel (`Promise.all`) |
+| `submitRSVPForSlots(slotIds, data)` | Submits the same data for each slot sequentially (stops on first error) |
 
 ## Security
 
 - All requests include the `x-company-id` header
+- In the browser, requests also include `x-origin` from `location.origin` at call time
 - Domain whitelist is enforced on the backend
 - The SDK only passes the required parameters
 

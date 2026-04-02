@@ -67,6 +67,7 @@ describe("EventsSDK", () => {
           headers: expect.objectContaining({
             "Content-Type": "application/json",
             "x-company-id": "company-123",
+            "x-origin": window.location.origin,
           }),
         })
       );
@@ -271,6 +272,7 @@ describe("EventsSDK", () => {
           headers: expect.objectContaining({
             "Content-Type": "application/json",
             "x-company-id": "company-123",
+            "x-origin": window.location.origin,
           }),
           body: JSON.stringify({ email: "user@example.com", name: "John" }),
         })
