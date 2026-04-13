@@ -125,6 +125,7 @@ describe("EventsSDK", () => {
         slots: mockEventConfig.event_slots,
         singleSlot: true,
         multiSlotSelection: false,
+        eventMultiSlot: false,
         eventLocation: null,
         eventLogo: null,
         companyLogo: null,
@@ -210,6 +211,95 @@ describe("EventsSDK", () => {
 
       const def = await sdk.getFormDefinition("evt-1");
       expect(def.multiSlotSelection).toBe(true);
+      expect(def.eventMultiSlot).toBe(true);
+    });
+
+    it("sets multiSlotSelection when slot_display is checkbox without event_multi_slot", async () => {
+      const cfg: EventFormConfig = {
+        ...mockEventConfig,
+        event_multi_slot: false,
+        field_configuration: [
+          ...(mockEventConfig.field_configuration as FormField[]),
+          {
+            id: "f3",
+            label: "Slots",
+            slug: "slots",
+            type: "slots",
+            required: true,
+            sort: 2,
+            slot_display: "checkbox",
+          },
+        ],
+        event_slots: [
+          ...mockEventConfig.event_slots,
+          {
+            id: "slot-2",
+            title: "Slot B",
+            capacity: 5,
+            starts_at: "2025-04-02T10:00:00Z",
+            ends_at: "2025-04-02T12:00:00Z",
+          },
+        ],
+      };
+
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(() =>
+          Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve(cfg),
+            status: 200,
+          })
+        )
+      );
+
+      const def = await sdk.getFormDefinition("evt-1");
+      expect(def.multiSlotSelection).toBe(true);
+      expect(def.eventMultiSlot).toBe(false);
+    });
+
+    it("uses select when slot_display is select even if event_multi_slot is true", async () => {
+      const cfg: EventFormConfig = {
+        ...mockEventConfig,
+        event_multi_slot: true,
+        field_configuration: [
+          ...(mockEventConfig.field_configuration as FormField[]),
+          {
+            id: "f3",
+            label: "Slots",
+            slug: "slots",
+            type: "slots",
+            required: true,
+            sort: 2,
+            slot_display: "select",
+          },
+        ],
+        event_slots: [
+          ...mockEventConfig.event_slots,
+          {
+            id: "slot-2",
+            title: "Slot B",
+            capacity: 5,
+            starts_at: "2025-04-02T10:00:00Z",
+            ends_at: "2025-04-02T12:00:00Z",
+          },
+        ],
+      };
+
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(() =>
+          Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve(cfg),
+            status: 200,
+          })
+        )
+      );
+
+      const def = await sdk.getFormDefinition("evt-1");
+      expect(def.multiSlotSelection).toBe(false);
+      expect(def.eventMultiSlot).toBe(true);
     });
 
     it("maps event_location, logos and company from API", async () => {
@@ -405,6 +495,42 @@ describe("EventsSDK", () => {
       const checks = container?.querySelectorAll('input[type="checkbox"][name="slotId"]');
       expect(checks?.length).toBe(2);
       expect(container?.innerHTML).toContain("rsvp-sdk-field-slots-multi");
+    });
+
+    it("renders message field with content HTML", async () => {
+      const msgConfig: EventFormConfig = {
+        ...mockEventConfig,
+        field_configuration: [
+          ...(mockEventConfig.field_configuration as FormField[]),
+          {
+            id: "m1",
+            label: "Info",
+            slug: "info",
+            type: "message",
+            required: false,
+            sort: 10,
+            content: "<p>Hello <strong>world</strong></p>",
+          },
+        ] as FormField[],
+      };
+
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(() =>
+          Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve(msgConfig),
+            status: 200,
+          })
+        )
+      );
+
+      document.body.innerHTML = '<div id="rsvp-container"></div>';
+      await sdk.renderForm("rsvp-container", "evt-1");
+
+      const container = document.getElementById("rsvp-container");
+      expect(container?.querySelector(".rsvp-sdk-field-message")).toBeTruthy();
+      expect(container?.innerHTML).toContain("<strong>world</strong>");
     });
   });
 });

@@ -37,11 +37,12 @@ Returns a structured JSON with fields, slots and title so you can build the form
 
 ```ts
 const def = await sdk.getFormDefinition("event-id");
-// def = { eventId, title, fields, slots, singleSlot, multiSlotSelection, eventLocation, eventLogo, companyLogo, company }
-// def.fields = [{ id, label, slug, type, required, placeholder, options?, ... }]
+// def = { eventId, title, fields, slots, singleSlot, multiSlotSelection, eventMultiSlot, eventLocation, eventLogo, companyLogo, company }
+// def.fields = [{ id, label, slug, type, required, placeholder, options?, slot_display?, content?, ... }]
+// Slots: `slot_display` is `"checkbox"` (multi + one POST per slot) or `"select"` (single). If omitted, `event_multi_slot` applies.
+// Message: `type: "message"` renders `content` as HTML (trusted API markup).
 // def.slots = [{ id, title, capacity, starts_at, ends_at }]
 // def.singleSlot = true when there's only one slot (no slot selector needed)
-// def.multiSlotSelection mirrors API field `event_multi_slot` (checkboxes + one POST per slot when true)
 // eventLocation / eventLogo / companyLogo / company mirror API snake_case fields on the form response
 ```
 

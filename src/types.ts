@@ -10,7 +10,11 @@ export type FormFieldType =
   | "date"
   | "checkbox"
   | "select"
-  | "slots";
+  | "slots"
+  | "message";
+
+/** For `type: "slots"`: how to render slot choices (from API `slot_display`). */
+export type SlotDisplay = "checkbox" | "select";
 
 export interface FormFieldOption {
   label: string;
@@ -26,6 +30,10 @@ export interface FormField {
   sort?: number;
   placeholder?: string;
   options?: FormFieldOption[];
+  /** When `type` is `slots`: `checkbox` = multi-select + one submission per slot; `select` = single select. */
+  slot_display?: SlotDisplay;
+  /** When `type` is `message`: HTML snippet to display (trusted API content, no user input). */
+  content?: string | null;
 }
 
 export interface EventSlot {
@@ -68,8 +76,10 @@ export interface FormDefinition {
   fields: FormField[];
   slots: EventSlot[];
   singleSlot: boolean;
-  /** Mirrors `event_multi_slot` from the form API response. */
+  /** True when any `slots` field uses `slot_display: "checkbox"` (or legacy `event_multi_slot` if `slot_display` omitted). */
   multiSlotSelection: boolean;
+  /** Mirrors API `event_multi_slot` (used when `slot_display` is omitted on slots fields). */
+  eventMultiSlot: boolean;
   eventLocation: string | null;
   eventLogo: string | null;
   companyLogo: string | null;

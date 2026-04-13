@@ -18,6 +18,7 @@ export type {
   FormDefinition,
   FormField,
   RsvpSubmissionData,
+  SlotDisplay,
 } from "./types";
 
 export interface EventsSDKOptions {
@@ -31,6 +32,14 @@ function parseFieldConfig(config: EventFormConfig["field_configuration"]): FormF
   if (!config || typeof config !== "object") return [];
   const list: FormField[] = Array.isArray(config) ? config : (Object.values(config) as FormField[]);
   return list.sort((a, b) => (a.sort ?? 0) - (b.sort ?? 0));
+}
+
+/** Checkbox multi-slot UI when `slot_display === "checkbox"`, or legacy when omitted and `event_multi_slot` is true. */
+function isSlotsCheckboxMode(field: FormField, eventMultiSlot: boolean): boolean {
+  if (field.type !== "slots") return false;
+  if (field.slot_display === "checkbox") return true;
+  if (field.slot_display === "select") return false;
+  return eventMultiSlot;
 }
 
 function formatSlotDate(value: string): string {
@@ -81,7 +90,8 @@ export class EventsSDK {
     const slots = config.event_slots ?? [];
     const hasSlotField = fields.some((f) => f.type === "slots");
     const singleSlot = slots.length === 1 && !hasSlotField;
-    const multiSlotSelection = config.event_multi_slot === true;
+    const eventMultiSlot = config.event_multi_slot === true;
+    const multiSlotSelection = fields.some((f) => isSlotsCheckboxMode(f, eventMultiSlot));
 
     return {
       eventId: config.id,
@@ -90,6 +100,7 @@ export class EventsSDK {
       slots,
       singleSlot,
       multiSlotSelection,
+      eventMultiSlot,
       eventLocation: config.event_location ?? null,
       eventLogo: config.event_logo ?? null,
       companyLogo: config.company_logo ?? null,
@@ -139,12 +150,13 @@ export class EventsSDK {
       fields,
       slots,
       singleSlot,
-      multiSlotSelection,
+      eventMultiSlot,
       eventLocation,
       eventLogo,
       companyLogo,
       company,
     } = def;
+    const slotsField = fields.find((f) => f.type === "slots");
     const container = document.getElementById(containerId);
     if (!container) {
       throw new Error(`Container #${containerId} not found`);
@@ -177,7 +189,7 @@ export class EventsSDK {
       )} ${requiredMark}</label>`;
 
       if (field.type === "slots") {
-        if (multiSlotSelection) {
+        if (isSlotsCheckboxMode(field, eventMultiSlot)) {
           html += `
           <div class="rsvp-sdk-field rsvp-sdk-field-slots-multi" data-slug="${escapeHtml(
             field.slug
@@ -216,6 +228,17 @@ export class EventsSDK {
           </div>
         `;
         }
+      } else if (field.type === "message") {
+        html += `
+          <div class="rsvp-sdk-field rsvp-sdk-field-message" data-slug="${escapeHtml(field.slug)}">
+            ${
+              field.label
+                ? `<div class="rsvp-sdk-message-label">${escapeHtml(field.label)}</div>`
+                : ""
+            }
+            <div class="rsvp-sdk-message-content">${field.content ?? ""}</div>
+          </div>
+        `;
       } else if (field.type === "checkbox") {
         html += `
           <div class="rsvp-sdk-field rsvp-sdk-field-checkbox" data-slug="${escapeHtml(field.slug)}">
@@ -296,7 +319,7 @@ export class EventsSDK {
       let slotIds: string[];
       if (singleSlot) {
         slotIds = [slots[0]!.id];
-      } else if (multiSlotSelection) {
+      } else if (slotsField && isSlotsCheckboxMode(slotsField, eventMultiSlot)) {
         slotIds = formData.getAll("slotId").filter((v) => v && String(v).trim() !== "") as string[];
         if (slotIds.length === 0) {
           callbacks?.onError?.(new Error("Please select at least one slot"));
@@ -322,7 +345,7 @@ export class EventsSDK {
 
       const body: RsvpSubmissionData = { email };
       for (const f of fields) {
-        if (f.type === "email" || f.type === "slots") continue;
+        if (f.type === "email" || f.type === "slots" || f.type === "message") continue;
         const val = formData.get(f.slug);
         if (f.type === "checkbox") {
           body[f.slug] = !!val;

@@ -99,6 +99,26 @@
   gap: 0.5rem;
 }
 
+.rsvp-sdk-field-message .rsvp-sdk-message-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+
+.rsvp-sdk-field-message .rsvp-sdk-message-content {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #374151;
+}
+
+.rsvp-sdk-field-message .rsvp-sdk-message-content :first-child {
+  margin-top: 0;
+}
+
+.rsvp-sdk-field-message .rsvp-sdk-message-content :last-child {
+  margin-bottom: 0;
+}
+
 .rsvp-sdk-single-slot {
   font-size: 0.75rem;
   color: #9ca3af;
